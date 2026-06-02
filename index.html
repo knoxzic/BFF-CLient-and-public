@@ -1,1 +1,428 @@
-cat /home/workdir/artifacts/bff-public-client-portal/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Face Forward | Public + Client Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* === ADMIN PORTAL STYLING (from your BFF-admin code) === */
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .admin-header { background: #1f2937; color: #f9fafb; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+        .stat-card { background: white; border-radius: 16px; padding: 1.25rem; border: 1px solid #e5e7eb; }
+        
+        .admin-view .card, .admin-view .stat-card {
+            background: #1f2937; color: #f9fafb; border-color: #374151;
+        }
+        
+        .form-input {
+            border-color: #e5e7eb;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .modern-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .modern-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+<!-- Top Bar -->
+<div class="bg-slate-900 text-white text-sm py-2 px-6 flex justify-between items-center">
+    <div>INTERACTIVE DEMO — Public + Client Portal (Firebase connected)</div>
+    <button onclick="window.open('https://knoxzic.github.io/BFF-admin/', '_blank')" 
+            class="text-xs px-4 py-1 bg-white/10 rounded-2xl">View Admin Portal</button>
+</div>
+
+<!-- Navigation -->
+<nav class="bg-white border-b">
+    <div class="max-w-screen-xl mx-auto px-6 flex justify-between items-center h-16">
+        <div class="flex items-center gap-x-3">
+            <img src="logo.jpeg" alt="Best Face Forward" class="h-9 w-auto rounded-2xl">
+            <span class="font-semibold text-xl">Best Face Forward</span>
+        </div>
+        
+        <div id="nav-public" class="flex gap-x-6 text-sm">
+            <a href="#pricing" class="hover:text-blue-700">Pricing</a>
+            <a href="#intake" class="hover:text-blue-700">Start Intake</a>
+        </div>
+        
+        <div id="nav-auth">
+            <button onclick="showLoginModal()" class="px-5 h-10 text-sm font-semibold">Log in</button>
+            <button onclick="showLoginModal(true)" class="px-6 h-10 bg-slate-900 text-white rounded-3xl text-sm font-semibold">Get Started</button>
+        </div>
+        
+        <div id="nav-client" class="hidden items-center gap-x-4">
+            <span id="nav-user-name" class="font-semibold"></span>
+            <button onclick="logoutUser()" class="text-xs px-4 h-9 border rounded-2xl">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ==================== PUBLIC SITE ==================== -->
+<div id="public-site">
+
+    <!-- Hero -->
+    <div class="max-w-screen-xl mx-auto px-6 pt-14 pb-12">
+        <h1 class="text-6xl font-semibold tracking-tighter leading-none">Tax prep &amp; bookkeeping<br>that actually feels professional.</h1>
+        <p class="mt-4 max-w-md text-lg text-slate-600">Modern ERO services and a client experience designed for busy founders and nonprofits.</p>
+        
+        <div class="mt-8 flex gap-x-4">
+            <button onclick="document.getElementById('intake').scrollIntoView({behavior:'smooth'})" 
+                    class="px-8 h-12 bg-blue-700 text-white rounded-3xl font-semibold">Start Your Intake Form</button>
+            <button onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" 
+                    class="px-6 h-12 border rounded-3xl font-semibold">See Pricing</button>
+        </div>
+    </div>
+
+    <!-- Pricing -->
+    <div id="pricing" class="max-w-screen-xl mx-auto px-6 py-12">
+        <h2 class="text-center text-3xl font-semibold mb-8">Transparent Pricing</h2>
+        
+        <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <!-- Basic Plan -->
+            <div class="card p-7 border">
+                <div class="font-semibold">Basic</div>
+                <div class="mt-3"><span class="text-4xl font-semibold">$99</span><span class="text-sm">/quarter</span></div>
+                <ul class="mt-6 text-sm space-y-2">
+                    <li>✓ Full tax preparation</li>
+                    <li>✓ Basic bookkeeping (50 tx/mo)</li>
+                    <li>✓ Client portal access</li>
+                </ul>
+                <button onclick="startIntake()" class="mt-6 w-full h-11 border rounded-3xl font-semibold">Get Started</button>
+            </div>
+
+            <!-- Professional -->
+            <div class="card p-7 border-2 border-blue-700">
+                <div class="font-semibold">Professional <span class="text-xs bg-blue-700 text-white px-2 rounded">POPULAR</span></div>
+                <div class="mt-3"><span class="text-4xl font-semibold">$199</span><span class="text-sm">/quarter</span></div>
+                <ul class="mt-6 text-sm space-y-2">
+                    <li>✓ Everything in Basic</li>
+                    <li>✓ Unlimited bookkeeping</li>
+                    <li>✓ Priority support + dedicated preparer</li>
+                </ul>
+                <button onclick="startIntake()" class="mt-6 w-full h-11 bg-blue-700 text-white rounded-3xl font-semibold">Start Professional</button>
+            </div>
+
+            <!-- Enterprise -->
+            <div class="card p-7 border">
+                <div class="font-semibold">Enterprise</div>
+                <div class="mt-3"><span class="text-4xl font-semibold">$399</span><span class="text-sm">/quarter</span></div>
+                <button onclick="startIntake()" class="mt-6 w-full h-11 border rounded-3xl font-semibold">Talk to Sales</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Intake Form -->
+    <div id="intake" class="max-w-2xl mx-auto px-6 pb-20">
+        <h2 class="text-3xl font-semibold text-center mb-8">Start Your Intake</h2>
+        
+        <!-- Multi-step form -->
+        <div class="bg-white rounded-3xl shadow p-8">
+            <!-- Step content here (simplified for clarity) -->
+            <div id="intake-form">
+                <!-- You can paste your previous 4-step form here -->
+                <input id="org-name" placeholder="Organization Name" class="w-full border p-3 rounded-2xl mb-3" value="Early Steps Childcare Center">
+                <input id="contact-email" placeholder="Email" class="w-full border p-3 rounded-2xl mb-3" value="lori.jones@earlystepscc.org">
+                
+                <button onclick="submitIntakeToFirebase()" 
+                        class="w-full h-12 bg-emerald-600 text-white rounded-3xl font-semibold mt-4">
+                    Submit Intake Form (Saves to Firebase)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CLIENT PORTAL ==================== -->
+<div id="client-dashboard-wrapper" class="hidden max-w-screen-xl mx-auto px-6 py-10">
+    <h2 id="client-welcome" class="text-3xl font-semibold mb-6">Welcome back</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="stat-card"><div class="text-xs">PROGRESS</div><div class="text-3xl font-bold">68%</div></div>
+        <div class="stat-card"><div class="text-xs">NEXT DEADLINE</div><div class="text-3xl font-bold">11 days</div></div>
+        <div class="stat-card"><div class="text-xs">DOCUMENTS</div><div class="text-3xl font-bold">14</div></div>
+        <div class="stat-card"><div class="text-xs">PLAN</div><div class="text-3xl font-bold">Professional</div></div>
+    </div>
+    
+    <!-- Add your progress tracker, documents, etc. here -->
+</div>
+
+<!-- Login Modal -->
+<div id="login-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+    <div class="bg-white rounded-3xl w-full max-w-md p-8">
+        <h2 class="text-2xl font-semibold mb-6">Welcome back</h2>
+        
+        <!-- Login Form -->
+        <div id="login-form">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold tracking-wider text-slate-500">EMAIL OR USERNAME</label>
+                    <input id="login-email" type="email" value="admin" class="form-input mt-1 w-full border px-4 h-12 rounded-2xl text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-bold tracking-wider text-slate-500">PASSWORD</label>
+                    <input id="login-password" type="password" value="password123" class="form-input mt-1 w-full border px-4 h-12 rounded-2xl text-sm">
+                </div>
+                
+                <button onclick="performLogin()" class="mt-2 w-full h-12 bg-slate-900 hover:bg-black text-white font-semibold rounded-3xl modern-btn">Sign In</button>
+                
+                <div class="text-center space-y-1">
+                    <button onclick="quickDemoLogin()" class="text-xs text-blue-600 font-medium hover:underline">Use client demo (Lori Jones)</button><br>
+                    <button onclick="quickAdminLogin()" class="text-xs text-emerald-600 font-medium hover:underline">Use BFF Admin demo (admin / password123)</button>
+                    <div class="text-[10px] text-slate-400 mt-1">Matches BFF admin portal styling</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-2xl text-white font-medium z-[101]"></div>
+
+<script>
+    // ==================== FIREBASE CONFIG ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBxZDiGhbDyPwIhCSH6f2YjlK0B_dlF2Qk",
+        authDomain: "bestfaceforward-a5f69.firebaseapp.com",
+        projectId: "bestfaceforward-a5f69",
+        storageBucket: "bestfaceforward-a5f69.firebasestorage.app",
+        messagingSenderId: "657899604318",
+        appId: "1:657899604318:web:227722de6309c83c5467cf"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+
+    // ==================== STORAGE UTILITIES ====================
+    function saveToStorage(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function getFromStorage(key) {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : null;
+    }
+
+    // ==================== TOAST NOTIFICATIONS ====================
+    function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-2xl text-white font-medium z-[101]`;
+        
+        if (type === 'success') {
+            toast.classList.add('bg-emerald-600');
+        } else if (type === 'error') {
+            toast.classList.add('bg-red-600');
+        } else {
+            toast.classList.add('bg-blue-600');
+        }
+        
+        toast.classList.remove('hidden');
+        
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+
+    // ==================== LOGIN FUNCTIONS ====================
+    function performLogin() {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        
+        if (!email) {
+            showToast('Please enter your email or username', 'error');
+            return;
+        }
+        
+        // Special mock admin login matching BFF admin portal
+        if (email.toLowerCase() === 'admin' && password === 'password123') {
+            const adminUser = {
+                id: 999,
+                email: 'admin@bff.tax',
+                name: 'BFF Admin',
+                org: 'Best Face Forward, LLC',
+                role: 'admin',
+                joined: '2025-01-15'
+            };
+            currentUser = adminUser;
+            saveToStorage('bff_currentUser', currentUser);
+            
+            hideLoginModal();
+            updateNavForUser(currentUser);
+            
+            const dashboard = document.getElementById('client-dashboard-wrapper');
+            dashboard.classList.add('admin-view');
+            
+            showToast('Logged in as BFF Admin — admin portal styling active', 'success');
+            
+            setTimeout(() => {
+                document.getElementById('client-dashboard-wrapper').scrollIntoView({ behavior: 'smooth' });
+            }, 400);
+            return;
+        }
+        
+        // Normal demo / client login (any email works for demo)
+        const demoUser = {
+            id: 1,
+            email: email,
+            name: 'Demo User',
+            role: 'client'
+        };
+        currentUser = demoUser;
+        saveToStorage('bff_currentUser', currentUser);
+        
+        hideLoginModal();
+        updateNavForUser(currentUser);
+        
+        showToast(`Welcome back, ${currentUser.name}!`, 'success');
+        
+        setTimeout(() => {
+            document.getElementById('client-dashboard-wrapper').scrollIntoView({ behavior: 'smooth' });
+        }, 400);
+    }
+
+    function quickAdminLogin() {
+        const adminUser = {
+            id: 999,
+            email: 'admin@bff.tax',
+            name: 'BFF Admin',
+            org: 'Best Face Forward, LLC',
+            role: 'admin',
+            joined: '2025-01-15'
+        };
+        
+        currentUser = adminUser;
+        saveToStorage('bff_currentUser', currentUser);
+        
+        hideLoginModal();
+        updateNavForUser(currentUser);
+        
+        // Apply admin portal styling to client dashboard
+        const dashboard = document.getElementById('client-dashboard-wrapper');
+        dashboard.classList.add('admin-view');
+        
+        showToast('Logged in as BFF Admin — admin portal style enabled', 'success');
+        
+        setTimeout(() => {
+            document.getElementById('client-dashboard-wrapper').scrollIntoView({ behavior: 'smooth' });
+        }, 400);
+    }
+
+    function quickDemoLogin() {
+        const demoUser = {
+            id: 100,
+            email: 'lori.jones@earlystepscc.org',
+            name: 'Lori Jones',
+            org: 'Early Steps Childcare Center',
+            role: 'client',
+            plan: 'Professional'
+        };
+        
+        currentUser = demoUser;
+        saveToStorage('bff_currentUser', currentUser);
+        
+        hideLoginModal();
+        updateNavForUser(currentUser);
+        
+        showToast(`Welcome back, ${currentUser.name}!`, 'success');
+        
+        setTimeout(() => {
+            document.getElementById('client-dashboard-wrapper').scrollIntoView({ behavior: 'smooth' });
+        }, 400);
+    }
+
+    // ==================== UI FUNCTIONS ====================
+    function updateNavForUser(user) {
+        document.getElementById('public-site').classList.add('hidden');
+        document.getElementById('client-dashboard-wrapper').classList.remove('hidden');
+        document.getElementById('nav-auth').classList.add('hidden');
+        document.getElementById('nav-client').classList.remove('hidden');
+        document.getElementById('nav-user-name').innerText = user.name || user.email;
+        document.getElementById('client-welcome').innerText = `Welcome back, ${user.name}`;
+    }
+
+    function showLoginModal(isRegister = false) {
+        document.getElementById('login-modal').classList.remove('hidden');
+        document.getElementById('login-modal').classList.add('flex');
+    }
+
+    function hideLoginModal() {
+        document.getElementById('login-modal').classList.add('hidden');
+        document.getElementById('login-modal').classList.remove('flex');
+    }
+
+    function logoutUser() {
+        currentUser = null;
+        localStorage.removeItem('bff_currentUser');
+        location.reload();
+    }
+
+    function startIntake() {
+        document.getElementById('intake').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ==================== FIREBASE FUNCTIONS ====================
+    async function submitIntakeToFirebase() {
+        const data = {
+            orgName: document.getElementById('org-name').value,
+            contactEmail: document.getElementById('contact-email').value,
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: "Submitted"
+        };
+        
+        try {
+            await db.collection("intakeForms").add(data);
+            showToast("Form submitted successfully! It will appear in the Admin Portal.", 'success');
+        } catch (e) {
+            showToast("Error submitting form. Please try again.", 'error');
+            console.error("Submit error:", e);
+        }
+    }
+
+    // ==================== INITIALIZATION ====================
+    // Check for stored user on page load
+    window.addEventListener('load', () => {
+        const storedUser = getFromStorage('bff_currentUser');
+        if (storedUser) {
+            currentUser = storedUser;
+            updateNavForUser(currentUser);
+            
+            if (storedUser.role === 'admin') {
+                document.getElementById('client-dashboard-wrapper').classList.add('admin-view');
+            }
+        }
+    });
+
+    // Auto login check with Firebase
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            // Optional: auto show client portal
+        }
+    });
+
+    console.log("%c[BFF] Public + Client Portal ready with Firebase", "color:#64748b");
+</script>
+</body>
+</html>
