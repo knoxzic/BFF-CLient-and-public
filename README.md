@@ -1,1 +1,1 @@
-# BFF-CLient-and-public
+cat /home/workdir/artifacts/bff-public-client-portal/README.md | cat
